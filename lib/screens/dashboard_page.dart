@@ -48,16 +48,18 @@ class _DashboardPageState extends State<DashboardPage> {
     fetchTransactions();
   }
 
-  Future<void> deleteTransaction(int id) async {
-    final db = DatabaseHelper.instance;
-    await db.deleteTransaction(id);
-    fetchTransactions();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Dashboard")),
+      appBar: AppBar(
+        title: Text("Dashboard"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.history),
+            onPressed: () => Navigator.pushNamed(context, '/history'),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -170,73 +172,64 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               SizedBox(height: 16),
 
-              // Histórico de Transações com Botão de Lixeira
-              Card(
-                elevation: 2,
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: Text("Histórico de Transações"),
-                    ),
-                    ...transactions.map((transaction) {
-                      return ListTile(
-                        title: Text(transaction.name),
-                        subtitle: Text(formatDate(transaction.date)),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "${transaction.type == 'gasto' ? '-' : '+'} ${formatCurrency(transaction.value)}",
-                              style: TextStyle(
-                                color: transaction.type == 'gasto'
-                                    ? Colors.red
-                                    : Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text("Excluir Transação"),
-                                  content: Text(
-                                      "Deseja excluir a transação '${transaction.name}'?"),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: Text("Cancelar"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        deleteTransaction(transaction.id!);
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text("Excluir"),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+              // Botões para Adicionar Gastos e Ganhos
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Botão de Adicionar Gasto
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // Fundo do botão
+                        foregroundColor: Colors.black, // Cor do texto
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    }).toList(),
-                  ],
-                ),
+                      ),
+                      onPressed: () => showDialog(
+                        context: context,
+                        builder: (context) => AddTransactionDialog(
+                          onAddTransaction: (name, value, type) =>
+                              addTransaction(name, value, 'gasto'),
+                        ),
+                      ),
+                      child: Text(
+                        "Adicionar Gasto",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  // Botão de Adicionar Ganho
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green, // Fundo do botão
+                        foregroundColor: Colors.black, // Cor do texto
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () => showDialog(
+                        context: context,
+                        builder: (context) => AddTransactionDialog(
+                          onAddTransaction: (name, value, type) =>
+                              addTransaction(name, value, 'ganho'),
+                        ),
+                      ),
+                      child: Text(
+                        "Adicionar Ganho",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showDialog(
-          context: context,
-          builder: (context) =>
-              AddTransactionDialog(onAddTransaction: addTransaction),
-        ),
-        child: Icon(Icons.add),
       ),
     );
   }
